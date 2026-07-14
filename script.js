@@ -130,7 +130,7 @@ saveBtn.addEventListener("click", () => {
         }
     }
 
-    const dataUrl = exportCanvas.toDataURL("image/png");
+    const dataUrl = exportCanvas.toDataURL("image/jpg");
     const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
 
     if (isMobile) {
@@ -150,7 +150,7 @@ saveBtn.addEventListener("click", () => {
     } else {
         const downloadLink = document.createElement("a");
         downloadLink.href = dataUrl;
-        downloadLink.download = "pixel-art.png";
+        downloadLink.download = "pixel-art.jpg";
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
