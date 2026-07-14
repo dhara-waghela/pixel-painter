@@ -4,27 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixel Painter</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="container">
-
         <h1>Pixel Painter</h1>
         <p>Create pixel art anywhere — desktop or mobile.</p>
 
         <div class="toolbar">
             <input type="color" id="colorPicker" value="#3b82f6">
-
             <button id="brushBtn">Brush</button>
             <button id="eraserBtn">Eraser</button>
             <button id="clearBtn">Clear</button>
             <button id="saveBtn">Save</button>
         </div>
 
+        <!-- Replaced div with a real responsive canvas element -->
         <canvas id="paintCanvas" width="1024" height="1024"></canvas>
-
     </div>
 
     <script src="script.js"></script>
