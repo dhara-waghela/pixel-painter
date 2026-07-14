@@ -1,6 +1,7 @@
 const canvas = document.getElementById("paintCanvas");
 const ctx = canvas.getContext("2d");
 const picker = document.getElementById("colorPicker");
+const brushSizeSelect = document.getElementById("brushSize"); // New selector selector hook
 
 const brushBtn = document.getElementById("brushBtn");
 const eraserBtn = document.getElementById("eraserBtn");
@@ -29,26 +30,21 @@ function drawCanvas() {
         }
     }
 
-    // 2. Draw ultra-light inner grid borders optimized for 128x128
-    // Increased opacity slightly to 0.12 and line width to 1.5 so lines don't disappear on high-res scaling
+    // 2. Draw ultra-light inner grid borders
     ctx.strokeStyle = "rgba(0, 0, 0, 0.12)"; 
     ctx.lineWidth = 1.5;
     
     ctx.beginPath();
     for (let i = 1; i < GRID_SIZE; i++) {
         const pos = i * CELL_SIZE;
-        // Vertical lines
         ctx.moveTo(pos, 0);
         ctx.lineTo(pos, CANVAS_RESOLUTION);
-
-        // Horizontal lines
         ctx.moveTo(0, pos);
         ctx.lineTo(CANVAS_RESOLUTION, pos);
     }
-    ctx.stroke(); // Batched stroke operation for massive performance improvement
+    ctx.stroke();
 }
 
-// Draw the blank canvas at runtime
 drawCanvas();
 
 picker.addEventListener("input", () => {
@@ -59,21 +55,35 @@ picker.addEventListener("input", () => {
 brushBtn.addEventListener("click", () => { eraseMode = false; });
 eraserBtn.addEventListener("click", () => { eraseMode = true; });
 
-// Main painter engine
+// Main painter engine upgraded to paint bounding squares based on chosen size numbers
 function paintAtPoint(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
     
-    // Scale coordinate differences between matching system view rules
     const x = ((clientX - rect.left) / rect.width) * CANVAS_RESOLUTION;
     const y = ((clientY - rect.top) / rect.height) * CANVAS_RESOLUTION;
 
-    const col = Math.floor(x / CELL_SIZE);
-    const row = Math.floor(y / CELL_SIZE);
+    const targetCol = Math.floor(x / CELL_SIZE);
+    const targetRow = Math.floor(y / CELL_SIZE);
 
-    if (col >= 0 && col < GRID_SIZE && row >= 0 && row < GRID_SIZE) {
-        gridData[row][col] = eraseMode ? "white" : currentColor;
-        drawCanvas();
+    // Read current thickness value from drop down element
+    const currentSize = parseInt(brushSizeSelect.value, 10);
+    
+    // Calculate boundaries to center painting strokes perfectly on your cursor target pointer
+    const offsetStart = -Math.floor((currentSize - 1) / 2);
+    const offsetEnd = Math.floor(currentSize / 2);
+
+    for (let rOffset = offsetStart; rOffset <= offsetEnd; rOffset++) {
+        for (let cOffset = offsetStart; cOffset <= offsetEnd; cOffset++) {
+            const row = targetRow + rOffset;
+            const col = targetCol + cOffset;
+
+            // Ensure boundary indexes do not step outside the 128x128 array bounds
+            if (col >= 0 && col < GRID_SIZE && row >= 0 && row < GRID_SIZE) {
+                gridData[row][col] = eraseMode ? "white" : currentColor;
+            }
+        }
     }
+    drawCanvas();
 }
 
 // Desktop Mouse Logic
@@ -86,11 +96,9 @@ canvas.addEventListener("mousemove", (e) => {
     if (drawing) paintAtPoint(e.clientX, e.clientY);
 });
 
-window.addEventListener("mouseup", () => {
-    drawing = false;
-});
+window.addEventListener("mouseup", () => { drawing = false; });
 
-// Mobile Touch Logic (Prevents page scrolling while painting)
+// Mobile Touch Logic
 canvas.addEventListener("touchstart", (e) => {
     e.preventDefault();
     drawing = true;
@@ -106,17 +114,13 @@ canvas.addEventListener("touchmove", (e) => {
     }
 }, { passive: false });
 
-window.addEventListener("touchend", () => {
-    drawing = false;
-});
+window.addEventListener("touchend", () => { drawing = false; });
 
-// Clear tool logic
 clearBtn.addEventListener("click", () => {
     gridData = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill("white"));
     drawCanvas();
 });
 
-// Image Save logic (Clean 1024x1024 export without grid lines)
 saveBtn.addEventListener("click", () => {
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = CANVAS_RESOLUTION;
