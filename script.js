@@ -9,7 +9,7 @@ const saveBtn = document.getElementById("saveBtn");
 
 const GRID_SIZE = 128;
 const CANVAS_RESOLUTION = 1024;
-const CELL_SIZE = CANVAS_RESOLUTION / GRID_SIZE;
+const CELL_SIZE = CANVAS_RESOLUTION / GRID_SIZE; // 8 canvas pixels per cell
 
 let drawing = false;
 let currentColor = picker.value;
@@ -29,23 +29,23 @@ function drawCanvas() {
         }
     }
 
-    // 2. Draw ultra-light inner grid borders
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.05)"; 
-    ctx.lineWidth = 1;
+    // 2. Draw ultra-light inner grid borders optimized for 128x128
+    // Increased opacity slightly to 0.12 and line width to 1.5 so lines don't disappear on high-res scaling
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.12)"; 
+    ctx.lineWidth = 1.5;
     
+    ctx.beginPath();
     for (let i = 1; i < GRID_SIZE; i++) {
+        const pos = i * CELL_SIZE;
         // Vertical lines
-        ctx.beginPath();
-        ctx.moveTo(i * CELL_SIZE, 0);
-        ctx.lineTo(i * CELL_SIZE, CANVAS_RESOLUTION);
-        ctx.stroke();
+        ctx.moveTo(pos, 0);
+        ctx.lineTo(pos, CANVAS_RESOLUTION);
 
         // Horizontal lines
-        ctx.beginPath();
-        ctx.moveTo(0, i * CELL_SIZE);
-        ctx.lineTo(CANVAS_RESOLUTION, i * CELL_SIZE);
-        ctx.stroke();
+        ctx.moveTo(0, pos);
+        ctx.lineTo(CANVAS_RESOLUTION, pos);
     }
+    ctx.stroke(); // Batched stroke operation for massive performance improvement
 }
 
 // Draw the blank canvas at runtime
@@ -130,11 +130,10 @@ saveBtn.addEventListener("click", () => {
         }
     }
 
-    const dataUrl = exportCanvas.toDataURL("image/jpeg",0.9);
+    const dataUrl = exportCanvas.toDataURL("image/jpeg", 0.9);
     const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
 
     if (isMobile) {
-        // Safe cross-origin tab opening workaround for iOS Safari/Android Chrome
         const newWindow = window.open();
         if (newWindow) {
             newWindow.document.write(`
